@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection;
+using System.Threading;
 using NSpec;
 using NSpec.Domain;
 using NSpec.Domain.Formatters;
@@ -32,6 +33,7 @@ namespace ConsoleApplication1
                     outputFormatter = new HtmlFormatter();
                 }
 
+                Thread.Sleep( commandLineArgs.DebugWaitTimeInSeconds * 1000 );
                 new ContextRunner(builder, outputFormatter).Run();
             }
             catch (Exception e)
@@ -78,6 +80,13 @@ namespace ConsoleApplication1
                     commandLineArgs.HtmlOutput = true;
                     continue;
                 }
+                if( args[i] == "--debug" )
+                {
+                    int waitTime = 0;
+                    Int32.TryParse( args[++i], out waitTime );
+                    commandLineArgs.DebugWaitTimeInSeconds = waitTime;
+                    continue;
+                }
             }
 
             return commandLineArgs;
@@ -98,6 +107,7 @@ namespace ConsoleApplication1
             Console.WriteLine( "                                          the template provided" );
             Console.WriteLine( " --xml                                    The output will be in xml format" );
             Console.WriteLine( " --html                                   The output will be in html format" );
+            Console.WriteLine( " --debug <wait time in seconds>           Delays the execution of the specs so you can attach a debugger to the runner" );
             System.Environment.Exit( 1 );
         }
 
@@ -107,6 +117,7 @@ namespace ConsoleApplication1
         public bool HtmlOutput { get; set; }
         public string TemplateFileName { get; set; }
         public string OutputFileName { get; set; }
+        public int DebugWaitTimeInSeconds { get; set; }
 
         private CommandLineArgs()
         {
@@ -115,6 +126,7 @@ namespace ConsoleApplication1
             this.XmlOutput = false;
             this.HtmlOutput = false;
             this.OutputFileName = "";
+            this.DebugWaitTimeInSeconds = 0;
         }
     }
 }
