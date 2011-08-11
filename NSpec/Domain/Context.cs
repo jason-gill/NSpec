@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using NSpec.Domain.Attributes;
 
 namespace NSpec.Domain
 {
@@ -126,13 +127,26 @@ namespace NSpec.Domain
             return false;
         }
 
-        public Context(string name = "", int level = 0, bool isPending = false)
+        public Context(string name = "", int level = 0, bool isPending = false, object[] customAttributes = null )
         {
             Name = name.Replace("_", " ");
             Level = level;
             Examples = new List<Example>();
             Contexts = new ContextCollection();
             this.isPending = isPending;
+
+            this.IsGrouping = false;
+            if( customAttributes != null && customAttributes.Length > 0 )
+            {
+                foreach( object customAttribute in customAttributes )
+                {
+                    if( customAttribute is ContextGroupingAttribute )
+                    {
+                        this.IsGrouping = true;
+                        break;
+                    }
+                } 
+            }
         }
 
         public string Name;
@@ -143,6 +157,7 @@ namespace NSpec.Domain
         public Action<nspec> BeforeInstance, ActInstance;
         public Context Parent;
         public Exception contextLevelFailure;
+        public bool IsGrouping;
         private bool isPending;
     }
 }

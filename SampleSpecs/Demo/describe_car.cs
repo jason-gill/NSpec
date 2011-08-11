@@ -1,5 +1,6 @@
 ﻿using System;
 using NSpec;
+using NSpec.Domain.Attributes;
 
 /*
 public class Car
@@ -14,7 +15,7 @@ class describe_car : nspec
     {
         Car car = null;
 
-        context["car has 10 gallon tank"] = () =>
+        context_grouping["car has 10 gallon tank"] = () =>
         {
             before = () => car = new Car(tankSize: 10);
 
@@ -94,6 +95,7 @@ class describe_car : nspec
         });
     }
 
+    [ContextGrouping]
     void when_driving_car()
     {
         it["should throw error if car isn't started"] = 

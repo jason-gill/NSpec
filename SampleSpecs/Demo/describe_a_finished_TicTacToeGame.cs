@@ -1,9 +1,11 @@
 using NSpec;
+using NSpec.Domain.Attributes;
 
 namespace SampleSpecs.Demo
 {
     class describe_a_finished_TicTacToeGame : describe_TicTacToeGame
     {
+        [ContextGrouping]
         void describe_a_draw()
         {
             context["all squares taken with no 3 in a row"] = () =>
@@ -20,6 +22,7 @@ namespace SampleSpecs.Demo
             };
         }
 
+        [ContextGrouping]
         void describe_a_winning_game()
         {
             players = new[] { "x", "o" };

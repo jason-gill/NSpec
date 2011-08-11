@@ -13,6 +13,7 @@ namespace NSpec
         public nspec()
         {
             context = new ActionRegister(AddContext);
+            this.context_grouping = new ActionRegister(this.AddContextGrouping);
             xcontext = new ActionRegister(AddIgnoredContext);
             describe = new ActionRegister(AddContext);
             xdescribe = new ActionRegister(AddIgnoredContext);
@@ -68,6 +69,12 @@ namespace NSpec
         /// <para>For Examples see http://www.nspec.org</para>
         /// </summary>
         public ActionRegister context;
+
+        /// <summary>
+        /// Create a subcontext grouping.  Useful when you want to output the child contexts and examples together.
+        /// <para>For Examples see http://www.nspec.org</para>
+        /// </summary>
+        public ActionRegister context_grouping;
 
         /// <summary>
         /// Mark a subcontext as pending (add all child contexts as pending)
@@ -159,6 +166,13 @@ namespace NSpec
         void AddContext(string name, Action action)
         {
             var contextToRun = new Context(name, level);
+
+            RunContext(contextToRun, action);
+        }
+        void AddContextGrouping(string name, Action action)
+        {
+            var contextToRun = new Context(name, level);
+            contextToRun.IsGrouping = true;
 
             RunContext(contextToRun, action);
         }

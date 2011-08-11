@@ -27,7 +27,7 @@ namespace NSpec.Domain
         }
 
         public ClassContext(Type type, Conventions conventions = null)
-            : base(type.Name, 0)
+            : base( type.Name, 0, customAttributes: type.GetCustomAttributes( false ) )
         {
             this.type = type;
 

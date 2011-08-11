@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Web;
@@ -15,7 +16,7 @@ namespace NSpec.Domain.Formatters
         public void Write( ContextCollection contexts )
         {
             HtmlDocument htmlDocument = new HtmlDocument();
-            htmlDocument.Head.Children.Add( this.InLineCss() );
+            htmlDocument.Head.Children.Add( this.BuildInLineCss() );
 
             htmlDocument.Body.Children.Add( this.BuildTableOfSpecifications( contexts ) );
 
@@ -31,19 +32,50 @@ namespace NSpec.Domain.Formatters
             HtmlTag contextPage = new HtmlTag( "div" ).Id( context.Name.RemoveWhiteSpace() ).AddClass( "context-page" );
 
             contextPage.Children.Add( this.BuildBreadcrumbs( breadcrumbs ) );
-            contextPage.Children.Add( this.BuildContextRunScore( context ) );
+            contextPage.Children.Add( this.BuildAllContextsRunScore( context ) );
             contextPage.Children.Add( this.BuildContextName( context ) );
-            contextPage.Children.Add( this.BuildContextExamples( context.Examples ) );
-            contextPage.Children.Add( this.BuildContextChildren( context ) );
 
-            htmlBody.Children.Add( contextPage );
+            if( context.IsGrouping )
+            {
+                contextPage.Children.Add( this.BuildRemainingContextsAndExamples( context ) );
+                htmlBody.Children.Add( contextPage );
+            }
+            else
+            {
+                contextPage.Children.Add( this.BuildContextExamples( context.Examples ) );
+                contextPage.Children.Add( this.BuildContextChildren( context ) );
 
-            breadcrumbs.Push( context.Name );
-            context.Contexts.Do( c => this.BuildContext( c, htmlBody, breadcrumbs ) );
-            breadcrumbs.Pop();
+                htmlBody.Children.Add( contextPage );
+
+                breadcrumbs.Push( context.Name );
+                context.Contexts.Do( c => this.BuildContext( c, htmlBody, breadcrumbs ) );
+                breadcrumbs.Pop();
+            }
         }
-        
 
+        HtmlTag BuildRemainingContextsAndExamples( Context context )
+        {
+            HtmlTag contextExamples = new HtmlTag( "div" ).AddClass( "context-examples" );
+
+            if( context.Examples.Count > 0 )
+            {
+                HtmlTag ulContextExamples = new HtmlTag( "ul" );
+                StringBuilder sbContextExamples = new StringBuilder();
+                context.Examples.Do( e => this.BuildContextExample( sbContextExamples, e ) );
+                ulContextExamples.Text( sbContextExamples.ToString() ).Encoded( false );
+
+                contextExamples.Children.Add( ulContextExamples );
+            }
+
+            StringBuilder sbChildContextsAndExamples = new StringBuilder();
+            context.Contexts.Do( c => this.BuildChildContextsAndExamples( sbChildContextsAndExamples, c ) );
+            HtmlTag divChildContextsAndExamples = new HtmlTag( "div" );
+            divChildContextsAndExamples.Text( sbChildContextsAndExamples.ToString() ).Encoded( false );
+
+            contextExamples.Children.Add( divChildContextsAndExamples );
+
+            return contextExamples;
+        }
 
         #endregion
 
@@ -51,18 +83,18 @@ namespace NSpec.Domain.Formatters
         {
             HtmlTag contextPage = new HtmlTag( "div" ).Id("ToS").AddClass( "context-page" );
             HtmlTag contextRunDate = new HtmlTag( "div" ).AddClass( "context-run-date" );
-            HtmlTag contextName = new HtmlTag( "div" ).AddClass( "context-name" );
-            HtmlTag contextChildren = new HtmlTag( "div" ).AddClass( "context-children" );
+            HtmlTag tableOfSpecsHeading = new HtmlTag( "div" ).AddClass( "context-name" );
+            HtmlTag parentContexts = new HtmlTag( "div" ).AddClass( "context-children" );
 
             contextRunDate.Text( DateTime.Now.ToString() );
-            contextName.Children.Add( new HtmlTag("h1").Text("Table of Specifications") );
+            tableOfSpecsHeading.Children.Add( new HtmlTag("h1").Text("Table of Specifications") );
             
-            contextChildren.Children.Add( BuildContextList( contexts ) );
+            parentContexts.Children.Add( this.BuildListOfContexts( contexts ) );
 
             contextPage.Children.Add( contextRunDate );
-            contextPage.Children.Add( this.BuildContextRunScore( contexts ) );
-            contextPage.Children.Add( contextName );
-            contextPage.Children.Add( contextChildren );
+            contextPage.Children.Add( this.BuildAllContextsRunScore( contexts ) );
+            contextPage.Children.Add( tableOfSpecsHeading );
+            contextPage.Children.Add( parentContexts );
 
             return contextPage;
         }
@@ -78,7 +110,7 @@ namespace NSpec.Domain.Formatters
                     .Attr( "target", "_top" )
                     .Text( breadcrumb );
 
-                HtmlTag spacer = new HtmlTag( "span" ).Text( ">" );
+                HtmlTag spacer = new HtmlTag( "span" ).AddClass( "context-breadcrumb-spacer" ).Text( ">" );
 
                 contextBreadcrumbs.Children.Add( link );
                 contextBreadcrumbs.Children.Add( spacer );
@@ -87,7 +119,7 @@ namespace NSpec.Domain.Formatters
             return contextBreadcrumbs;
         }
 
-        private HtmlTag BuildContextRunScore( IContextScore contextScore )
+        private HtmlTag BuildAllContextsRunScore( IContextScore contextScore )
         {
             HtmlTag contextRunScore = new HtmlTag( "div" ).AddClass( "context-run-score" );
             
@@ -111,38 +143,59 @@ namespace NSpec.Domain.Formatters
             return contextName;
         }
 
-        private HtmlTag BuildContextList( ContextCollection contexts )
+        private HtmlTag BuildListOfContexts( ContextCollection contexts )
         {
             HtmlTag tosTable = new HtmlTag( "table" );
             foreach( Context context in contexts )
             {
                 HtmlTag row = new HtmlTag( "tr" );
                 
-                HtmlTag contextChildName = new HtmlTag( "td" );
+                HtmlTag contextName = new HtmlTag( "td" );
                 HtmlTag ahref = new HtmlTag( "a" )
                     .Attr( "href", String.Format( "#{0}", context.Name.RemoveWhiteSpace() ) )
                     .Attr( "target", "_top" )
                     .Text( context.Name );
-                contextChildName.Children.Add( ahref );
+                contextName.Children.Add( ahref );
 
-                HtmlTag contextChildTotalSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
+                int failures = context.Failures().Count();
+                int pendings = context.Pendings().Count();
+
+                HtmlTag contextTotalSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
                     .Text( new HtmlTag( "span" ).AddClass( "spec-total" ).Text( context.AllExamples().Count().ToString() ).ToString() )
                     .Encoded( false );
-                HtmlTag contextChildFailedSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
-                    .Text( new HtmlTag( "span" ).AddClass( "spec-failed" ).Text( context.Failures().Count().ToString() ).ToString() )
+                HtmlTag contextFailedSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
+                    .Text( new HtmlTag( "span" ).AddClass( (failures == 0 ? "spec-failed" : "spec-failed-inverse") ).Text( failures.ToString() ).ToString() )
                     .Encoded( false );
-                HtmlTag contextChildPendingSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
-                    .Text( new HtmlTag( "span" ).AddClass( "spec-pending" ).Text( context.Pendings().Count().ToString() ).ToString() )
+                HtmlTag contextPendingSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
+                    .Text( new HtmlTag( "span" ).AddClass( (pendings == 0 ? "spec-pending" : "spec-pending-inverse") ).Text( pendings.ToString() ).ToString() )
                     .Encoded( false );
 
-                row.Children.Add( contextChildTotalSpecs ); 
-                row.Children.Add( contextChildFailedSpecs ); 
-                row.Children.Add( contextChildPendingSpecs );
-                row.Children.Add( contextChildName );
+                row.Children.Add( contextTotalSpecs ); 
+                row.Children.Add( contextFailedSpecs ); 
+                row.Children.Add( contextPendingSpecs );
+                row.Children.Add( contextName );
 
                 tosTable.Children.Add( row );
             }
+
             return tosTable;
+        }
+
+        private void BuildChildContextsAndExamples( StringBuilder sb, Context context )
+        {
+            sb.AppendLine( "<ul>" );
+            sb.AppendFormat( "<li>{0}", context.Name );
+            sb.AppendLine();
+            if( context.Examples.Count > 0 )
+            {
+                sb.AppendLine( "<ul>" );
+                context.Examples.Do( e => this.BuildContextExample( sb, e ) );
+                sb.AppendLine( "</ul>" );
+            }
+            context.Contexts.Do( c => this.BuildChildContextsAndExamples( sb, c ) );
+            sb.AppendLine();
+            sb.AppendLine( "</li>" );
+            sb.AppendLine( "</ul>" );
         }
 
         private HtmlTag BuildContextExamples( List<Example> examples )
@@ -195,13 +248,13 @@ namespace NSpec.Domain.Formatters
             if( context.Contexts.Count > 0 )
             {
                 contextChildren.Children.Add( new HtmlTag( "h2" ).Text( "Additional specifications" ) );
-                contextChildren.Children.Add( this.BuildContextList( context.Contexts ) );
+                contextChildren.Children.Add( this.BuildListOfContexts( context.Contexts ) );
             }
 
             return contextChildren;
         }
 
-        private HtmlTag InLineCss()
+        private HtmlTag BuildInLineCss()
         {
             StringBuilder sb = new StringBuilder();
 
@@ -226,12 +279,15 @@ namespace NSpec.Domain.Formatters
             sb.AppendLine( ".context-run-score { text-align: left; font-weight: bold; }" );
             sb.AppendLine( ".context-run-date { text-align: left; color: gray; font-size: x-small; }" );
             sb.AppendLine( ".context-breadcrumbs { padding: 0 0 1em 0; }" );
+            sb.AppendLine( ".context-breadcrumb-spacer { font-size: .75em; }" );
             sb.AppendLine( ".context-examples { background-color: #F5FAFA; border-color: #ACD1E9; border-style: solid; border-width: thin; margin-bottom: 1em; padding-right: 1em; }" );
 
             sb.AppendLine( ".spec-total { font-weight: bold; color: #000000; }" );
             sb.AppendLine( ".spec-passed { font-weight:bold; color:green; }" );
             sb.AppendLine( ".spec-failed { font-weight: bold; color: #FF0000; }" );
-            sb.AppendLine( ".spec-pending { font-weight: bold; color: #0000FF; }" );
+            sb.AppendLine( ".spec-failed-inverse { font-weight: bold; color: #FFFFFF; background-color: #FF0000; }" );
+            sb.AppendLine( ".spec-pending { font-weight: bold; color: #FF9900; }" );
+            sb.AppendLine( ".spec-pending-inverse { font-weight: bold; color: #FFFFFF; background-color: #FF9900; }" );
 			sb.AppendLine( ".spec-exception {background-color: #FFD2CF; border-color: #FF828D; border-style: dashed; border-width: thin; padding: 1em; font-size:small; white-space: pre-wrap; padding: 0.5em}" );
 
             HtmlTag style = new HtmlTag( "style" );
