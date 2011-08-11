@@ -31,7 +31,7 @@ namespace NSpecNUnit
         [Test]
         public void should_aggregate_examples()
         {
-            contexts.Examples().Count().should_be(3);
+            contexts.AllExamples().Count().should_be(3);
         }
 
         [Test]

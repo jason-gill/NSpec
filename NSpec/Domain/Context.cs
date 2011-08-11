@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace NSpec.Domain
 {
-    public class Context
+    public class Context : IContextScore
     {
         public void RunBefores(nspec instance)
         {
@@ -41,7 +41,7 @@ namespace NSpec.Domain
 
         public IEnumerable<Example> AllExamples()
         {
-            return Contexts.Examples().Union(Examples);
+            return Contexts.AllExamples().Union(Examples);
         }
 
         public bool IsPending()
@@ -52,6 +52,10 @@ namespace NSpec.Domain
         public IEnumerable<Example> Failures()
         {
             return AllExamples().Where(e => e.Exception != null);
+        }
+        public IEnumerable<Example> Pendings()
+        {
+            return AllExamples().Where(e => e.Pending );
         }
 
         public void AddContext(Context child)

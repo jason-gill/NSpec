@@ -72,7 +72,7 @@ namespace NSpec.Domain.Formatters
         public string Summary( ContextCollection contexts )
         {
             return "{0} Examples, {1} Failed, {2} Pending".With(
-                contexts.Examples().Count(),
+                contexts.AllExamples().Count(),
                 contexts.Failures().Count(),
                 contexts.Pendings().Count()
             );

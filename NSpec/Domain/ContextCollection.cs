@@ -3,25 +3,25 @@ using System.Linq;
 
 namespace NSpec.Domain
 {
-    public class ContextCollection : List<Context>
+    public class ContextCollection : List<Context>, IContextScore
     {
         public ContextCollection(IEnumerable<Context> contexts) :base(contexts){}
 
         public ContextCollection(){}
 
-        public IEnumerable<Example> Examples()
+        public IEnumerable<Example> AllExamples()
         {
             return this.SelectMany(c => c.AllExamples());
         }
 
         public IEnumerable<Example> Failures()
         {
-            return Examples().Where(e => e.Exception != null);
+            return this.AllExamples().Where(e => e.Exception != null);
         }
 
         public IEnumerable<Example> Pendings()
         {
-            return Examples().Where(e => e.Pending);
+            return this.AllExamples().Where(e => e.Pending);
         }
     }
 }

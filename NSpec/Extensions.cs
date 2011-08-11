@@ -160,5 +160,10 @@ namespace NSpec
                 return o.ToString();
             }).ToArray();
         }
+
+        public static string RemoveWhiteSpace( this string source )
+        {
+            return source.Replace( " ", "" );
+        }
     }
 }

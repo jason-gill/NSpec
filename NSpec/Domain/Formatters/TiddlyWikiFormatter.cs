@@ -32,7 +32,7 @@ namespace NSpec.Domain.Formatters
 
                 tiddlersOutput.Append( this.tiddlers[context] );
             }
-            int examplesCount = contexts.Examples().Count();
+            int examplesCount = contexts.AllExamples().Count();
             int failuresCount = contexts.Failures().Count();
             int pendingsCount = contexts.Pendings().Count();
 

@@ -32,6 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HtmlTags">
+      <HintPath>..\packages\HtmlTags.1.0.0.23\lib\2.0\HtmlTags.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework, Version=2.5.7.10213, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\nunit.framework.dll</HintPath>
@@ -52,11 +55,13 @@
     <Compile Include="Domain\ContextRunner.cs" />
     <Compile Include="Domain\ContextBuilder.cs" />
     <Compile Include="Conventions.cs" />
+    <Compile Include="Domain\Formatters\DocumentStyleFormatter.cs" />
     <Compile Include="Domain\Formatters\HtmlFormatter.cs" />
     <Compile Include="Domain\Formatters\IFormatter.cs" />
     <Compile Include="Domain\Formatters\TiddlyWikiFormatter.cs" />
     <Compile Include="Domain\Extensions\DomainExtensions.cs" />
     <Compile Include="Domain\Formatters\XmlFormatter.cs" />
+    <Compile Include="Domain\IContextScore.cs" />
     <Compile Include="Domain\MethodContext.cs" />
     <Compile Include="Domain\ExceptionNotThrown.cs" />
     <Compile Include="DefaultConventions.cs" />
@@ -75,6 +80,9 @@
     <Content Include="Domain\Formatters\Templates\TiddlyWiki_Template.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

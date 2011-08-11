@@ -16,7 +16,7 @@ namespace NSpec.Domain.Formatters
             XmlTextWriter xml = new XmlTextWriter( sw );
 
             xml.WriteStartElement( "Contexts" );
-            xml.WriteAttributeString( "TotalSpecs", contexts.Examples().Count().ToString() );
+            xml.WriteAttributeString( "TotalSpecs", contexts.AllExamples().Count().ToString() );
             xml.WriteAttributeString( "TotalFailed", contexts.Failures().Count().ToString() );
             xml.WriteAttributeString( "TotalPending", contexts.Pendings().Count().ToString() );
 

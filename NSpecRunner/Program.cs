@@ -75,6 +75,11 @@ namespace NSpecRunner
                     commandLineArgs.OutputFormatter = new HtmlFormatter(); 
                     continue;
                 }
+                if( args[i] == "--document" )
+                {
+                    commandLineArgs.OutputFormatter = new DocumentStyleFormatter(); 
+                    continue;
+                }
                 if( args[i] == "--debug" )
                 {
                     int waitTime = 0;
@@ -102,6 +107,7 @@ namespace NSpecRunner
             Console.WriteLine( "                                          the template provided" );
             Console.WriteLine( " --xml                                    The output will be in xml format" );
             Console.WriteLine( " --html                                   The output will be in html format" );
+            Console.WriteLine( " --document                               The output will be in html format but formatted with a table of contents and each context in it's own section." );
             Console.WriteLine( " --debug <wait time in seconds>           Delays the execution of the specs so you can attach a debugger to the runner" );
             System.Environment.Exit( 1 );
         }
