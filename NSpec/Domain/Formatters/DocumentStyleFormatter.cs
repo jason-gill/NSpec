@@ -143,39 +143,37 @@ namespace NSpec.Domain.Formatters
             return contextName;
         }
 
-        private HtmlTag BuildListOfContexts( ContextCollection contexts )
+        private HtmlTag BuildListOfContexts( ContextCollection contexts)
         {
-            HtmlTag tosTable = new HtmlTag( "table" );
+            TableTag tosTable = new TableTag();
+
             foreach( Context context in contexts )
             {
-                HtmlTag row = new HtmlTag( "tr" );
-                
-                HtmlTag contextName = new HtmlTag( "td" );
-                HtmlTag ahref = new HtmlTag( "a" )
-                    .Attr( "href", String.Format( "#{0}", context.Name.RemoveWhiteSpace() ) )
-                    .Attr( "target", "_top" )
-                    .Text( context.Name );
-                contextName.Children.Add( ahref );
-
                 int failures = context.Failures().Count();
                 int pendings = context.Pendings().Count();
 
-                HtmlTag contextTotalSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
-                    .Text( new HtmlTag( "span" ).AddClass( "spec-total" ).Text( context.AllExamples().Count().ToString() ).ToString() )
-                    .Encoded( false );
-                HtmlTag contextFailedSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
-                    .Text( new HtmlTag( "span" ).AddClass( (failures == 0 ? "spec-failed" : "spec-failed-inverse") ).Text( failures.ToString() ).ToString() )
-                    .Encoded( false );
-                HtmlTag contextPendingSpecs = new HtmlTag( "td" ).Style( "text-align", "right" )
-                    .Text( new HtmlTag( "span" ).AddClass( (pendings == 0 ? "spec-pending" : "spec-pending-inverse") ).Text( pendings.ToString() ).ToString() )
-                    .Encoded( false );
+                HtmlTag contextTotalSpecs = new HtmlTag( "span" )
+                    .AddClass( "spec-total" )
+                    .Text( context.AllExamples().Count().ToString() ) ;
+                HtmlTag contextFailedSpecs = new HtmlTag( "span" )
+                    .AddClass( ( failures == 0 ? "spec-failed" : "spec-failed-inverse" ) )
+                    .Text( failures.ToString() );
+                HtmlTag contextPendingSpecs = new HtmlTag( "span" )
+                    .AddClass( ( pendings == 0 ? "spec-pending" : "spec-pending-inverse" ) )
+                    .Text( pendings.ToString() );
 
-                row.Children.Add( contextTotalSpecs ); 
-                row.Children.Add( contextFailedSpecs ); 
-                row.Children.Add( contextPendingSpecs );
-                row.Children.Add( contextName );
+                HtmlTag contextName = new HtmlTag( "a" )
+                    .Attr( "href", String.Format( "#{0}", context.Name.RemoveWhiteSpace() ) )
+                    .Attr( "target", "_top" )
+                    .Text( context.Name );
 
-                tosTable.Children.Add( row );
+                tosTable.AddBodyRow( b =>
+                {
+                    b.Cell( contextTotalSpecs.ToString() ).Encoded( false );
+                    b.Cell( contextFailedSpecs.ToString() ).Encoded( false );
+                    b.Cell( contextPendingSpecs.ToString() ).Encoded( false );
+                    b.Cell( contextName.ToString() ).Encoded( false );
+                });
             }
 
             return tosTable;
@@ -214,7 +212,7 @@ namespace NSpec.Domain.Formatters
             else
             {
                 contextExamples.Children.Add(
-                    new HtmlTag( "span" ).Text( "No specifications defined." ) );
+                    new HtmlTag( "span" ).Text( "No scenarios defined." ) );
             }
 
             return contextExamples;
@@ -247,7 +245,7 @@ namespace NSpec.Domain.Formatters
 
             if( context.Contexts.Count > 0 )
             {
-                contextChildren.Children.Add( new HtmlTag( "h2" ).Text( "Additional specifications" ) );
+                contextChildren.Children.Add( new HtmlTag( "h2" ).Text( "Additional Specifications" ) );
                 contextChildren.Children.Add( this.BuildListOfContexts( context.Contexts ) );
             }
 
