@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Reflection;
+using log4net;
 
 namespace NSpec.Domain
 {
     public class MethodContext : Context
     {
+        private static readonly ILog Log = LogManager.GetLogger( "NSpec.Domain.MethodContext" );
+
         public MethodContext(MethodInfo method)
             : base(method.Name, 0)
         {
@@ -13,6 +16,9 @@ namespace NSpec.Domain
 
         public override void Build(nspec instance)
         {
+            Log.DebugFormat( "Method:Build - Name: {0}", this.Name );
+            Log.DebugFormat( "--instance is: {0}", (instance == null ? "NULL" : "NOT NULL") );
+
             base.Build(instance);
 
             try

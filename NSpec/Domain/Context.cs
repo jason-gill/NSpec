@@ -2,26 +2,39 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using log4net;
 
 namespace NSpec.Domain
 {
     public class Context
     {
+        private static readonly ILog Log = LogManager.GetLogger( "NSpec.Domain.Context" );
+
         public void RunBefores(nspec instance)
         {
+            Log.DebugFormat( "Method:RunBefores - Name: {0}", this.Name );
+
+            Log.DebugFormat( "--Parent is: {0}", (Parent == null ? "NULL" : "NOT NULL") );
             if (Parent != null) Parent.RunBefores(instance);
 
+            Log.DebugFormat( "--BeforeInstance is: {0}", (BeforeInstance == null ? "NULL" : "NOT NULL") );
             if (BeforeInstance != null) BeforeInstance(instance);
 
+            Log.DebugFormat( "--Before is: {0}", (Before == null ? "NULL" : "NOT NULL") );
             if (Before != null) Before();
         }
 
         public void RunActs(nspec instance)
         {
+            Log.DebugFormat( "Method:RunActs - Name: {0}", this.Name );
+
+            Log.DebugFormat( "--Parent is: {0}", (Parent == null ? "NULL" : "NOT NULL") );
             if (Parent != null) Parent.RunActs(instance);
 
+            Log.DebugFormat( "--ActInstance is: {0}", (ActInstance == null ? "NULL" : "NOT NULL") );
             if (ActInstance != null) ActInstance(instance);
 
+            Log.DebugFormat( "--Act is: {0}", (Act == null ? "NULL" : "NOT NULL") );
             if (Act != null) Act();
         }
 
@@ -32,6 +45,9 @@ namespace NSpec.Domain
 
         public void AddExample(Example example)
         {
+            Log.DebugFormat( "Method:AddExample - Name: {0}", this.Name );
+            Log.DebugFormat( "--example is: {0}", example.Spec );
+
             example.Context = this;
 
             Examples.Add(example);
@@ -63,6 +79,9 @@ namespace NSpec.Domain
 
         public virtual void Run(nspec instance = null)
         {
+            Log.DebugFormat( "Method:Run - Name: {0}", this.Name );
+            Log.DebugFormat( "--instance is: {0}", (instance == null ? "NULL" : "NOT NULL") );
+
             var nspec = savedInstance ?? instance;
 
             Contexts.Do(c => c.Run(nspec));
@@ -73,6 +92,9 @@ namespace NSpec.Domain
 
         public virtual void Build(nspec instance=null)
         {
+            Log.DebugFormat( "Method:Build - Name: {0}", this.Name );
+            Log.DebugFormat( "--instance is: {0}", (instance == null ? "NULL" : "NOT NULL") );
+
             instance.Context = this;
 
             savedInstance = instance;
@@ -87,6 +109,10 @@ namespace NSpec.Domain
 
         public void Exercise(Example example, nspec nspec)
         {
+            Log.DebugFormat( "Method:Exercise - Name: {0}", this.Name );
+            Log.DebugFormat( "--example is: {0}", example.Spec );
+            Log.DebugFormat( "--nspec is: {0}", (nspec == null ? "NULL" : "NOT NULL") );
+
             if (example.Pending) return;
 
             if (contextLevelFailure != null)
@@ -139,5 +165,10 @@ namespace NSpec.Domain
         public Exception contextLevelFailure;
         private bool isPending;
         nspec savedInstance;
+
+        public nspec GetInstance()
+        {
+            return savedInstance;
+        }
     }
 }
