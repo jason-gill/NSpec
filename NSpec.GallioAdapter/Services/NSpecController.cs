@@ -6,6 +6,7 @@ using Gallio.Model.Commands;
 using Gallio.Model.Contexts;
 using Gallio.Model.Helpers;
 using Gallio.Runtime.ProgressMonitoring;
+using log4net;
 using NSpec.GallioAdapter.Model;
 using TestStep = Gallio.Model.Tree.TestStep;
 
@@ -13,8 +14,12 @@ namespace NSpec.GallioAdapter.Services
 {
     public class NSpecController : TestController
     {
+        private static readonly ILog Log = LogManager.GetLogger( "NSpec.GallioAdapter.Services.NSpecController" );
+
         protected override TestResult RunImpl( ITestCommand rootTestCommand, TestStep parentTestStep, TestExecutionOptions options, IProgressMonitor progressMonitor )
         {
+            Log.DebugFormat( "Method:TestResult" );
+
             using(progressMonitor.BeginTask( "Verifying Specifications", rootTestCommand.TestCount ) )
             {
                 if( options.SkipTestExecution )
@@ -44,6 +49,8 @@ namespace NSpec.GallioAdapter.Services
 
         private TestResult RunAssembly( ITestCommand command, TestStep rootStep )
         {
+            Log.DebugFormat( "Method:RunAssembly" );
+
             ITestContext assemblyContext = command.StartPrimaryChildStep( rootStep );
 
             TestOutcome outcome = TestOutcome.Passed;
@@ -64,6 +71,8 @@ namespace NSpec.GallioAdapter.Services
 
         private TestResult RunContext( NSpecContextTest contextTest, ITestCommand command, TestStep testStep )
         {
+            Log.DebugFormat( "Method:RunContext" );
+
             ITestContext testContext = command.StartPrimaryChildStep( testStep );
             TestOutcome outcome = TestOutcome.Passed;
             
@@ -92,6 +101,8 @@ namespace NSpec.GallioAdapter.Services
         TestResult RunTest( NSpecContextTest contextTest, NSpecExampleTest exampleTest, 
             ITestCommand testCommand, TestStep testStep )
         {
+            Log.DebugFormat( "Method:RunTest" );
+
             ITestContext testContext = testCommand.StartPrimaryChildStep( testStep );
             TestOutcome outcome = TestOutcome.Passed;
 
@@ -102,6 +113,9 @@ namespace NSpec.GallioAdapter.Services
             }
             else
             {
+                Log.DebugFormat( "--Exercise Context: {0}, Example: {1}, Instance: {2}",
+                    contextTest.Context.Name, exampleTest.Example.Spec, (contextTest.Context.GetInstance() == null ? "NULL" : "NOT NULL") );
+
                 contextTest.Context.Exercise( exampleTest.Example, contextTest.Context.GetInstance() );
 
                 if( exampleTest.Example.Exception != null )
