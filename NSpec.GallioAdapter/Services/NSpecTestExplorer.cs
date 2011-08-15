@@ -7,6 +7,7 @@ using Gallio.Common.Reflection;
 using Gallio.Model;
 using Gallio.Model.Helpers;
 using Gallio.Model.Tree;
+using log4net;
 using NSpec.GallioAdapter.Model;
 using NSpec;
 using NSpec.Domain;
@@ -17,8 +18,12 @@ namespace NSpec.GallioAdapter.Services
 {
     class NSpecTestExplorer : TestExplorer
     {
+        private static readonly ILog Log = LogManager.GetLogger( "NSpec.GallioAdapter.Services.NSpecTestExplorer" );
+
         protected override void ExploreImpl( IReflectionPolicy reflectionPolicy, ICodeElementInfo codeElement )
         {
+            Log.DebugFormat( "Method:ExploreImpl" );
+
             IAssemblyInfo assembly = ReflectionUtils.GetAssembly( codeElement );
             if( assembly != null )
             {
@@ -34,6 +39,8 @@ namespace NSpec.GallioAdapter.Services
 
         Test GetAssemblyTest( IAssemblyInfo assembly, Test parentTest, Version frameworkVersion, bool populateRecursively )
         {
+            Log.DebugFormat( "Method:GetAssemlyTest" );
+
             NSpecAssemblyTest assemblyTest;
 
             if( !assemblyTests.TryGetValue( assembly, out assemblyTest ) )
@@ -68,6 +75,8 @@ namespace NSpec.GallioAdapter.Services
 
         NSpecContextTest CreateGallioTestFrom( Context nspecContext )
         {
+            Log.DebugFormat( "Method:CreateGallioTestFrom" );
+
             NSpecContextTest contextTest = new NSpecContextTest( nspecContext );
 
             nspecContext.Examples.Do( e => contextTest.AddChild( this.CreateGallioTestFrom( e ) ) );
@@ -78,6 +87,8 @@ namespace NSpec.GallioAdapter.Services
 
         NSpecExampleTest CreateGallioTestFrom( Example nspecExample )
         {
+            Log.DebugFormat( "Method:CreateGallioTestFrom" );
+
             try
             {
                 NSpecExampleTest exampleTest = new NSpecExampleTest( nspecExample );
