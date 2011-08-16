@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Web;
 using HtmlTags;
@@ -21,7 +22,6 @@ namespace NSpec.Domain.Formatters
             htmlDocument.Body.Children.Add( this.BuildTableOfSpecifications( contexts ) );
 
             Stack<string> breadcrumbs = new Stack<string>();
-            breadcrumbs.Push( "ToS" );
             contexts.Do( c => this.BuildContext( c, htmlDocument.Body, breadcrumbs  ) );
 
             Console.WriteLine( htmlDocument.ToString() );
@@ -29,7 +29,7 @@ namespace NSpec.Domain.Formatters
 
         private void BuildContext( Context context, HtmlTag htmlBody, Stack<string> breadcrumbs )
         {
-            HtmlTag contextPage = new HtmlTag( "div" ).Id( context.Name.RemoveWhiteSpace() ).AddClass( "context-page" );
+            HtmlTag contextPage = new HtmlTag( "div" ).Id( this.CalculateMD5Hash( context ) ).AddClass( "context-page" );
 
             contextPage.Children.Add( this.BuildBreadcrumbs( breadcrumbs ) );
             contextPage.Children.Add( this.BuildAllContextsRunScore( context ) );
@@ -81,7 +81,7 @@ namespace NSpec.Domain.Formatters
 
         private HtmlTag BuildTableOfSpecifications( ContextCollection contexts )
         {
-            HtmlTag contextPage = new HtmlTag( "div" ).Id("ToS").AddClass( "context-page" );
+            HtmlTag contextPage = new HtmlTag( "div" ).Id( this.CalculateMD5Hash( "ToS" ) ).AddClass( "context-page" );
             HtmlTag contextRunDate = new HtmlTag( "div" ).AddClass( "context-run-date" );
             HtmlTag tableOfSpecsHeading = new HtmlTag( "div" ).AddClass( "context-name" );
             HtmlTag parentContexts = new HtmlTag( "div" ).AddClass( "context-children" );
@@ -103,14 +103,25 @@ namespace NSpec.Domain.Formatters
         {
             HtmlTag contextBreadcrumbs = new HtmlTag( "div" ).AddClass( "context-breadcrumbs" );
 
+            HtmlTag link = new HtmlTag( "a" )
+                .Attr( "href", String.Format( "#{0}", this.CalculateMD5Hash( "ToS" ) ) )
+                .Attr( "target", "_top" )
+                .Text( "ToS" );
+
+            HtmlTag spacer = new HtmlTag( "span" ).AddClass( "context-breadcrumb-spacer" ).Text( ">" );
+
+            contextBreadcrumbs.Children.Add( link );
+            contextBreadcrumbs.Children.Add( spacer );
+
+            List<string> breadcrumbList = new List<string>();
             foreach( string breadcrumb in breadcrumbs.Reverse() )
             {
-                HtmlTag link = new HtmlTag( "a" )
-                    .Attr( "href", String.Format( "#{0}", breadcrumb.RemoveWhiteSpace() ) )
+                breadcrumbList.Add( breadcrumb );
+
+                link = new HtmlTag( "a" )
+                    .Attr( "href", String.Format( "#{0}", this.CalculateMD5Hash( breadcrumbList ) ) )
                     .Attr( "target", "_top" )
                     .Text( breadcrumb );
-
-                HtmlTag spacer = new HtmlTag( "span" ).AddClass( "context-breadcrumb-spacer" ).Text( ">" );
 
                 contextBreadcrumbs.Children.Add( link );
                 contextBreadcrumbs.Children.Add( spacer );
@@ -163,7 +174,7 @@ namespace NSpec.Domain.Formatters
                     .Text( pendings.ToString() );
 
                 HtmlTag contextName = new HtmlTag( "a" )
-                    .Attr( "href", String.Format( "#{0}", context.Name.RemoveWhiteSpace() ) )
+                    .Attr( "href", String.Format( "#{0}", this.CalculateMD5Hash( context ) ) )
                     .Attr( "target", "_top" )
                     .Text( context.Name );
 
@@ -293,6 +304,48 @@ namespace NSpec.Domain.Formatters
             style.Text( sb.ToString() );
 
             return style;
+        }
+
+        string ContextFullName( Context context )
+        {
+            string name = context.Name; 
+
+            if( context.Parent != null )
+            {
+                name = String.Format( "{0}.{1}", this.ContextFullName( context.Parent ), name );
+            }
+            if( context.Parent == null )
+            {
+                name = "";
+            }
+
+            return name.Trim( '.' );
+        }
+
+        string CalculateMD5Hash( Context context )
+        {
+            return this.CalculateMD5Hash( this.ContextFullName( context ) );
+        }
+
+        string CalculateMD5Hash( List<string> input )
+        {
+            return this.CalculateMD5Hash( String.Join( ".", input.ToArray() ) );
+        }
+
+        string CalculateMD5Hash( string input )
+        {
+            // step 1, calculate MD5 hash from input
+            MD5 md5 = System.Security.Cryptography.MD5.Create();
+            byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes( input );
+            byte[] hash = md5.ComputeHash( inputBytes );
+
+            // step 2, convert byte array to hex string
+            StringBuilder sb = new StringBuilder();
+            for( int i = 0; i < hash.Length; i++ )
+            {
+                sb.Append( hash[i].ToString( "X2" ) );
+            }
+            return sb.ToString();
         }
     }
 }
